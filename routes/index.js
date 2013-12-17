@@ -2,28 +2,24 @@
 /*
  * GET home page.
  */
-var Userservice = require('../service/userService.js');
+var Userservice = require('../service/UserService.js');
 
 module.exports = function(app){
 
+    /**
+     * 登录接口
+     */
+    app.all('/user/name/:name/password/:password',function(){});
+	app.get('/user/name/:name/password/:password',Userservice.login);
 
     /**
-     * 注册页路由
+     * 查询用户名是否已存在
      */
-	app.get('/user/:userId',Userservice.getUserById);
+    app.get('/user/name/:name',Userservice.isUserNameExist);
 
-//    /**
-//     * 登录页路由
-//     */
-//  	app.all('/login', Userservice.checkNotLogin);
-//  	app.get('/login',function(req,res){
-//    	res.render('login', { title: '登录', typeName:'登录' ,error : req.flash('error').toString(),user: req.session.user});
-//  	});
-//  	app.post('/login', function(req, res){
-//	  	Userservice.login(req,res);
-//  	});
-//
-//
-
+    /**
+     * 注册接口
+     */
+    app.post('/user',Userservice.register);
 };
 

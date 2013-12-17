@@ -1,3 +1,6 @@
+/**
+ * Created by quyangcode_air on 13-12-15.
+ */
 var mysql = require('mysql');
 var pool = mysql.createPool({
     host: 'localhost',
