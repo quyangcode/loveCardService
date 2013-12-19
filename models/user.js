@@ -29,7 +29,7 @@ var loginSql = 'select count(1) from card_user where name = ? and password = ?';
 User.prototype.save = function (callback) {
     db.getConnection(function(err,con){
         if(err){
-            return callback(err,null);
+            return callback(err);
         }
         con.query(insertUserSql,this,function(err,rows){
             callback(err,rows);
@@ -45,7 +45,7 @@ User.prototype.save = function (callback) {
 User.getUserById = function (id, callback) {//读取用户信息
     db.getConnection(function(err,con){
         if(err){
-            return callback(err,null);
+            return callback(err);
         }
         con.query(selectUserByIdSql,[id],function(err,users){
             callback(err,users);
@@ -61,7 +61,7 @@ User.getUserById = function (id, callback) {//读取用户信息
 User.getUserByName = function (name, callback) {
     db.getConnection(function(err,con){
         if(err){
-            return callback(err,null);
+            return callback(err);
         }
         con.query(selectUserByNameSql,[name],function(err,users){
             return callback(err,users);
@@ -78,7 +78,7 @@ User.getUserByName = function (name, callback) {
 User.login = function (name, password, callback) {//读取用户信息
     db.getConnetction(function(err,con){
         if(err){
-            return callback(err,null);
+            return callback(err);
         }
         con.query(loginSql,[name,password],function(err,num){
             return callback(err,num);

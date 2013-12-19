@@ -7,6 +7,7 @@ var routes = require('./routes');
 var http = require('http');
 var path = require('path');
 
+var log4js = require('log4js');
 var app = express();
 
 var server = http.createServer(app);
@@ -28,10 +29,25 @@ app.use(express.cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(app.router);
 
+log4js.configure({
+    appenders: [
+        { type: 'console' },{
+            type: 'file',
+            filename: 'logs/access.log',
+            maxLogSize: 1024,
+            backups:4,
+            category: 'normal'
+        }
+    ],
+    replaceConsole: true
+});
+app.use(log4js.connectLogger(this.logger('normal'), {level:'auto', format:':method :url'}));
 // development only
 if ('development' == app.get('env')) {
     app.use(express.errorHandler());
 }
+
+
 
 routes(app);
 /**
