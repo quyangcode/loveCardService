@@ -17,15 +17,11 @@ var SystemConstant = require('../config/SystemConstant.js');
  * @param res
  */
 exports.register = function (req, res) {
-    var name = req.body.name;
-    var password = req.body.password;
-    var password2 = req.body.password2;
+    var name = req.params.name;
+    var password = req.params.password;
+    console.debug('name=' + name + ',pwd=' + password);
     if (!name || !password) {
-        return res.send({status:Code.PARAMETER_ERROR});
-    }
-    //检验用户两次输入的密码是否一致
-    if (password2 != password) {
-        return res.send({status:Code.PASSWORD_AGAIN_ERROR});
+        return res.send(JSON.stringify({status:Code.PARAMETER_ERROR}));
     }
     //生成密码的散列值
     password = MD5Utils.toMD5(password);
@@ -34,35 +30,24 @@ exports.register = function (req, res) {
         password: password,
         picAddress: SystemConstant.PIC_ADDRESS
     });
-    newUser.save(function(err,rows){
+    User.save(newUser,function(err,rows){
         if(err){
-            console.error('注册失败' + e);
-            return res.send({status:Code.REGISTER_ERROR});
+            console.error('注册失败' + err);
+            return res.send(JSON.stringify({status:Code.REGISTER_ERROR}));
         }
-        return res.send({status:Code.SUCCESS});
+        return res.send(JSON.stringify({status:Code.SUCCESS}));
     });
 };
-/**
- * 根据id查询user
- * @param id
- */
-exports.getUserById = function(id){
-    User.getUserById(id,function(err,users){
-        if(err || !users){
-            console.error('根据ID查询user失败'+ err);
-            return null;
-        }
-        return users[0];
-    });
-};
+
 
 /**
  * 根据name查询user
  * @param name
  */
-exports.getUserByName = function(name,callback){
+function getUserByName(name,callback){
     User.getUserByName(name,function(err,users){
-        if(err || users){
+        if(err){
+            console.error(err);
             return callback(null);
         }
         return callback(users[0]);
@@ -74,12 +59,13 @@ exports.getUserByName = function(name,callback){
  * @param res
  */
 exports.isUserNameExist = function(req,res){
-    var name = req.params.userName;
+    var name = req.params.name;
     User.getUserByName(name,function(err,users){
+        console.log(users[0]);
         if(err || users){
-            return res.send({status:Code.USER_IS_EXIST});
+            return res.send(JSON.stringify({status:Code.USER_IS_EXIST}));
         }
-        return res.send({status:Code.SUCCESS});
+        return res.send(JSON.stringify({status:Code.SUCCESS}));
     });
 };
 
@@ -92,19 +78,63 @@ exports.login = function (req, res) {
     var name = req.params.name;
     var password = req.params.password;
     if(!name || !password){
-        return res.send({status:Code.PARAMETER_ERROR});
+        return res.send(JSON.stringify({status:Code.PARAMETER_ERROR}));
     }
     //生成密码的散列值
     password = MD5Utils.toMD5(password);
-    //检查用户是否存在
-    User.login(name, password, function (err, num) {
-        if(num === 1){
-            res.send({status:Code.SUCCESS});
+    //用户登录
+    User.login(name, password, function (err, result) {
+        if(err){
+            console.error('用户登录异常' + err);
+            return res.send(JSON.stringify({status:Code.SYSTEM_ERROR}));
+        }
+        if(result.affectedRows === 1){
+            getUserByName(name,function(user){
+                return res.send(JSON.stringify({status:Code.SUCCESS,user:user}));
+            });
         }else{
-            res.send({status:Code.USERNAME_PASSWORD_ERROR});
+            return res.send(JSON.stringify({status:Code.USERNAME_PASSWORD_ERROR}));
         }
     });
 };
+
+exports.modify = function (req,res){
+    var user = {
+        name : req.body.name,
+        email : req.body.email,   //邮箱
+        mobile : req.body.mobile, //手机
+        sex : req.body.sex, //性别
+        introduction : req.body.introduction,
+        modify : new Date()
+    };
+    var id = req.body.id;
+    User.modify(user,id,function(err,result){
+        if(err){
+            console.error(err);
+            return res.send(JSON.stringify({status:Code.SYSTEM_ERROR}));
+        }
+        if(result.affectedRows === 1){
+            return res.send(JSON.stringify({status:0}));
+        }else{
+            return res.send(JSON.stringify({status:Code.MODIFY_ERROR}));
+        }
+    });
+};
+
+exports.verifyToken = function(req,res,next){
+    var token = req.body.token;
+    var id = req.body.id;
+    User.getUserById(id,function(err,users){
+        console.log(users);
+        if(users[0].token == token){
+            next();
+        }else{
+            res.send(JSON.stringify({status:Code.SIRN_ERROR}));
+        }
+    });
+};
+
+
 
 
 

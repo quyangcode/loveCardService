@@ -19,6 +19,8 @@ module.exports = exports = {
     //用户已存在
     USER_IS_EXIST : 1006,
     //sign校验失败
-    SIRN_ERROR : 1007
+    SIRN_ERROR : 1007,
+    //修改失败
+    MODIFY_ERROR : 1008
 };
 

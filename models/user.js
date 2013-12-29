@@ -3,15 +3,22 @@
  */
 
 var db = require('./DB.js');
+var async = require('async');
+var MD5Utils = require('../service/util/MD5Utils.js');
 
 function User(user) {
-    this.id = user.id;  //id
     this.name = user.name;  //用户名
     this.password = user.password;  // 密码
-    this.email = user.email;   //邮箱
-    this.mobile = user.mobile; //手机
-    this.sex = user.sex; //性别
-    this.picAddress = user.picAddress; //头像图片地址
+    this.email = null;   //邮箱
+    this.mobile = null; //手机
+    this.sex = 2; //性别
+    this.headShot = user.headShot; //头像图片地址
+    this.yn = 1;
+    this.status = 1;
+    this.introduction = '介绍下自己，让别人认识你.';
+    this.create = new Date();
+    this.modify = new Date();
+
 };
 
 module.exports = User;
@@ -20,19 +27,20 @@ module.exports = User;
 var insertUserSql = 'insert into card_user set ?';
 var selectUserByIdSql = 'select * from card_user where id = ?';
 var selectUserByNameSql = 'select * from card_user where name = ?';
-var loginSql = 'select count(1) from card_user where name = ? and password = ?';
+var loginSql = 'select id from card_user where name = ? and password = ?';
+var updateUserSql = 'update card_user set ? where ?';
 
 /**
  * 插入用户
  * @param callback
  */
-User.prototype.save = function (callback) {
+User.save = function (user,callback) {
     db.getConnection(function(err,con){
         if(err){
             return callback(err);
         }
-        con.query(insertUserSql,this,function(err,rows){
-            callback(err,rows);
+        con.query(insertUserSql,user,function(err,result){
+            callback(err,result.affectedRows);
         });
     });
 };
@@ -70,22 +78,59 @@ User.getUserByName = function (name, callback) {
 };
 
 /**
- * 用户是否存在
+ * 用户是否存在 存在更新token绑定用户状态
  * @param name
  * @param password
  * @param callback
  */
-User.login = function (name, password, callback) {//读取用户信息
-    db.getConnetction(function(err,con){
+User.login = function (name, password, callback) {
+    db.getConnection(function(err,con){
         if(err){
             return callback(err);
         }
-        con.query(loginSql,[name,password],function(err,num){
-            return callback(err,num);
+        async.waterfall([
+            function (callback) {
+                con.query(loginSql,[name,password],function(err,result){
+                    callback(err,result[0]);
+                });
+            },
+            function(result,callback){
+                var token = createUserStatusToken(name);
+                con.query(updateUserSql,[{token:token},{id:result.id}],function(err,result){
+                    callback(err,result);
+                });
+            }
+        ],function(err,result){
+            if(err){
+                console.error(err);
+                return callback(err);
+            }
+            return callback(err,result);
+        });
+    });
+};
+
+/**
+ * 修改用户信息
+ * @param user
+ * @param callback
+ */
+User.modify = function(user,id,callback){
+    db.getConnection(function(err,con){
+        if(err){
+            return callback(err);
+        }
+        con.query(updateUserSql,[user,{id:id}],function(err,result){
+            return callback(err,result);
         });
     });
 };
 
 
 
+function createUserStatusToken(userName){
+    var time = new Date();
+    var token = MD5Utils.toMD5(userName + time.getTime);
+    return token;
+};
 

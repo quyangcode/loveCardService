@@ -1,19 +1,23 @@
 {
-    "name": "loveCart",
-    "version": "1.0.2",
-    "private": true,
-    "author": "quyangcode",
-    "repository": {
-        "type": "git",
-        "url": "http://github.com/quyangcode/loveCartService.git"
-    },
-    "scripts": {
-        "start": "node app.js"
-    },
-    "dependencies": {
-        "express": "3.3.7",
-        "ejs": "*",
-        "log4js": "0.6.9",
-        "step":"*"
-    }
+  "name": "loveCart",
+  "version": "1.0.2",
+  "private": true,
+  "author": "quyangcode",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/quyangcode/loveCartService.git"
+  },
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "3.3.7",
+    "ejs": "0.8.5",
+    "log4js": "0.6.9",
+    "async": "~0.2.9"
+  },
+  "devDependencies": {
+    "mocha": "*",
+    "should": "~2.1.1"
+  }
 }
