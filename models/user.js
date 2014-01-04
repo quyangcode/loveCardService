@@ -4,7 +4,8 @@
 
 var db = require('./DB.js');
 var async = require('async');
-var MD5Utils = require('../service/util/MD5Utils.js');
+var EncryptUtils = require('../service/util/EncryptUtils.js');
+var SystemConstant = require('../config/SystemConstant.js');
 
 function User(user) {
     this.name = user.name;  //用户名
@@ -27,7 +28,7 @@ module.exports = User;
 var insertUserSql = 'insert into card_user set ?';
 var selectUserByIdSql = 'select * from card_user where id = ?';
 var selectUserByNameSql = 'select * from card_user where name = ?';
-var loginSql = 'select id from card_user where name = ? and password = ?';
+var loginSql = 'select * from card_user where name = ? and password = ?';
 var updateUserSql = 'update card_user set ? where ?';
 
 /**
@@ -62,7 +63,7 @@ User.getUserById = function (id, callback) {//读取用户信息
 };
 
 /**
- *
+ * 根据name获得用户信息
  * @param name
  * @param callback
  */
@@ -88,24 +89,8 @@ User.login = function (name, password, callback) {
         if(err){
             return callback(err);
         }
-        async.waterfall([
-            function (callback) {
-                con.query(loginSql,[name,password],function(err,result){
-                    callback(err,result[0]);
-                });
-            },
-            function(result,callback){
-                var token = createUserStatusToken(name);
-                con.query(updateUserSql,[{token:token},{id:result.id}],function(err,result){
-                    callback(err,result);
-                });
-            }
-        ],function(err,result){
-            if(err){
-                console.error(err);
-                return callback(err);
-            }
-            return callback(err,result);
+        con.query(loginSql,[name,password],function(err,users){
+            callback(err,users);
         });
     });
 };
@@ -127,10 +112,4 @@ User.modify = function(user,id,callback){
 };
 
 
-
-function createUserStatusToken(userName){
-    var time = new Date();
-    var token = MD5Utils.toMD5(userName + time.getTime);
-    return token;
-};
 

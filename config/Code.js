@@ -21,6 +21,8 @@ module.exports = exports = {
     //sign校验失败
     SIRN_ERROR : 1007,
     //修改失败
-    MODIFY_ERROR : 1008
+    MODIFY_ERROR : 1008,
+    //cardId不存在
+    CARD_NOT_EXIST : 1009
 };
 

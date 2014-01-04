@@ -6,10 +6,11 @@
  * 用户相关业务操作
  *
  */
-var MD5Utils = require('./util/MD5Utils.js');
+var EncryptUtils = require('./util/EncryptUtils.js');
 var User = require('../models/User.js');
 var Code = require('../config/Code.js');
 var SystemConstant = require('../config/SystemConstant.js');
+var Querystring = require('querystring');
 
 /**
  * 注册
@@ -19,12 +20,11 @@ var SystemConstant = require('../config/SystemConstant.js');
 exports.register = function (req, res) {
     var name = req.params.name;
     var password = req.params.password;
-    console.debug('name=' + name + ',pwd=' + password);
     if (!name || !password) {
         return res.send(JSON.stringify({status:Code.PARAMETER_ERROR}));
     }
     //生成密码的散列值
-    password = MD5Utils.toMD5(password);
+    password = EncryptUtils.toMD5(password);
     var newUser = new User({
         name: name,
         password: password,
@@ -61,7 +61,6 @@ function getUserByName(name,callback){
 exports.isUserNameExist = function(req,res){
     var name = req.params.name;
     User.getUserByName(name,function(err,users){
-        console.log(users[0]);
         if(err || users){
             return res.send(JSON.stringify({status:Code.USER_IS_EXIST}));
         }
@@ -81,21 +80,28 @@ exports.login = function (req, res) {
         return res.send(JSON.stringify({status:Code.PARAMETER_ERROR}));
     }
     //生成密码的散列值
-    password = MD5Utils.toMD5(password);
+    password = EncryptUtils.toMD5(password);
     //用户登录
-    User.login(name, password, function (err, result) {
+    User.login(name, password, function (err, users) {
         if(err){
             console.error('用户登录异常' + err);
             return res.send(JSON.stringify({status:Code.SYSTEM_ERROR}));
         }
-        if(result.affectedRows === 1){
-            getUserByName(name,function(user){
-                return res.send(JSON.stringify({status:Code.SUCCESS,user:user}));
-            });
+        if(users.length === 1){
+            var user = users[0];
+            return res.send(JSON.stringify({status:Code.SUCCESS,user:user,token:createUserToken(user.name,user.id)}));
         }else{
             return res.send(JSON.stringify({status:Code.USERNAME_PASSWORD_ERROR}));
         }
     });
+};
+
+
+
+function createUserToken(userName,id){
+    var desS = 'name=' + userName + '&id=' + id;
+    var token = EncryptUtils.encryptDES(desS,SystemConstant.KEY);
+    return token;
 };
 
 exports.modify = function (req,res){
@@ -104,7 +110,7 @@ exports.modify = function (req,res){
         email : req.body.email,   //邮箱
         mobile : req.body.mobile, //手机
         sex : req.body.sex, //性别
-        introduction : req.body.introduction,
+        introduction : req.body.introduction,//描述
         modify : new Date()
     };
     var id = req.body.id;
@@ -121,18 +127,31 @@ exports.modify = function (req,res){
     });
 };
 
-exports.verifyToken = function(req,res,next){
-    var token = req.body.token;
-    var id = req.body.id;
-    User.getUserById(id,function(err,users){
-        console.log(users);
-        if(users[0].token == token){
-            next();
-        }else{
-            res.send(JSON.stringify({status:Code.SIRN_ERROR}));
-        }
-    });
+
+/**
+ * token拦截器
+ * @param req
+ * @param res
+ * @param next
+ * @returns {*|ServerResponse}
+ */
+exports.verifyUserToken = function(req,res,next){
+    var user = verifyToken(req.param('token'));
+    if(!user.id){
+        return res.send(JSON.stringify({status:Code.SIRN_ERROR}));
+    }
+    req.user = user;
+    next();
 };
+
+
+
+function verifyToken(token){
+    var user = Querystring.parse(EncryptUtils.decryptDES(token,SystemConstant.KEY));
+    return user;
+};
+
+
 
 
 
