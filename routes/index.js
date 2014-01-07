@@ -32,10 +32,12 @@ module.exports = function(app){
      */
     app.post('/user',userservice.modify);
 
-    app.put('/card/id/:id/toId/:toId/token/:token',userservice.verifyUserToken);
+
     /**
      * 送卡片
      */
+    app.put('/card/id/:id/toId/:toId/token/:token',userservice.verifyUserToken);
+
     app.put('/card/id/:id/toId/:toId/token/:token',cardservice.sendCardToUser);
 
     /**
@@ -45,6 +47,21 @@ module.exports = function(app){
     app.put('/card/name/:name/description/:description/token/:token',userservice.verifyUserToken);
 
     app.put('/card/name/:name/description/:description/token/:token',cardservice.newCard);
+
+    /**
+     * 我的卡片
+     */
+    app.get('/card/token/:token',userservice.verifyUserToken);
+
+    app.get('/card/token/:token',cardservice.getUserCards);
+
+    /**
+     * 好友送我的卡片
+     */
+    app.get('/card/friendId/:friendId/token/:token',userservice.verifyUserToken);
+
+    app.get('/card/friendId/:friendId/token/:token',cardservice.getFriendCards);
+
 
 };
 

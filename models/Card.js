@@ -2,6 +2,7 @@
  * Created by quyangcode_air on 13-12-31.
  */
 var db = require('./DB.js');
+var mysql = require('mysql');
 
 function Card(card){
     this.name = card.name;
@@ -18,16 +19,18 @@ function Card(card){
 
 module.exports = Card;
 
-var selectUserCardSql = 'select * from card_info where toId = ? and type = 1';
 var insertCardSql = 'insert into card_info set ?';
-var selectCardSql = 'select * from card_info where ?';
+var selectCardByIdSql = 'select * from card_info where id = ? yn = 1';
+var selectCardByUserIdSql = 'select * from card_info where toId = ? and type = 1 and yn = 1';
+var selectFriendCard4userIdSql = 'select * from card_info where toId = ? and fromId = ? and type = 2 and yn = 1';
+
 
 Card.getCardsByUserId = function(userId,callback){
     db.getConnection(function(err,con){
         if(err){
             return callback(err);
         }
-        con.query(selectUserCardSql,[userId],function(err,cards){
+        con.query(selectCardByUserIdSql,userId,function(err,cards){
             return callback(err,cards);
         });
     });
@@ -50,18 +53,19 @@ Card.getCardById = function(id,callback){
         if(err){
             return callback(err);
         }
-        con.query(selectCardSql,[{id:id}],function(err,cards){
+        con.query(selectCardByIdSql,id,function(err,cards){
             return callback(err,cards);
         })
     });
 };
-//todo 还未写完
-Card.giveUserCard = function(cardId,UserId,callback){
+
+Card.getFriendCards = function(friendId,userId,callback){
     db.getConnection(function(err,con){
         if(err){
-            return callback(err);
+            callback(err);
         }
-        con.query(function(err,re){});
+        con.query(selectFriendCard4userIdSql,[userId,friendId],function(err,cards){
+            callback(err,cards);
+        });
     });
-
 };
