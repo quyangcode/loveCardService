@@ -10,6 +10,9 @@ var EncryptUtils = require('./util/EncryptUtils.js');
 var User = require('../models/User.js');
 var Code = require('../config/Code.js');
 var SystemConstant = require('../config/SystemConstant.js');
+var MessageType = require('../config/MessageType.js');
+var Relationship = require('../models/Relationship.js');
+var Message = require('../models/Message.js');
 var Querystring = require('querystring');
 
 /**
@@ -124,6 +127,17 @@ exports.modify = function (req,res){
         }else{
             return res.send(JSON.stringify({status:Code.MODIFY_ERROR}));
         }
+    });
+};
+
+exports.search = function(req,res){
+    var key = req.params.key;
+    User.search(key,function(err,users){
+        if(err){
+            console.error('搜索用户失败',err);
+            return res.send({status:Code.SYSTEM_ERROR});
+        }
+        return res.send({status:Code.SUCCESS,users:users});
     });
 };
 

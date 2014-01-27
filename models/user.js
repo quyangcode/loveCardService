@@ -30,6 +30,7 @@ var selectUserByIdSql = 'select * from card_user where id = ?';
 var selectUserByNameSql = 'select * from card_user where name = ?';
 var loginSql = 'select * from card_user where name = ? and password = ?';
 var updateUserSql = 'update card_user set ? where ?';
+var searchUserSql = 'select id,name,introduction from card_user where name like "$key$%" ';
 
 /**
  * 插入用户
@@ -109,6 +110,19 @@ User.modify = function(user,id,callback){
             return callback(err,result);
         });
     });
+};
+
+User.search = function(key,callback){
+    db.getConnection(function(err,con){
+        if(err){
+            return callback(err);
+        }
+        var temp = searchUserSql.replace('$key$',key);
+        con.query(temp,function(err,results){
+            callback(err,results);
+        });
+    });
+
 };
 
 

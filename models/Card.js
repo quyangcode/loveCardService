@@ -20,9 +20,12 @@ function Card(card){
 module.exports = Card;
 
 var insertCardSql = 'insert into card_info set ?';
-var selectCardByIdSql = 'select * from card_info where id = ? yn = 1';
 var selectCardByUserIdSql = 'select * from card_info where toId = ? and type = 1 and yn = 1';
 var selectFriendCard4userIdSql = 'select * from card_info where toId = ? and fromId = ? and type = 2 and yn = 1';
+var selectCardsByIds = 'select * from card_info where id in ( $ids$ ) and yn = 1';
+var useCardSql = 'update card_info set yn = 0 where id = ? and toId = ?';
+//消息语句 事务使用
+var insertMessSql = 'insert into card_message set ?';
 
 
 Card.getCardsByUserId = function(userId,callback){
@@ -48,12 +51,13 @@ Card.prototype.save = function(callback){
     });
 };
 
-Card.getCardById = function(id,callback){
+Card.getCardsByIds = function(ids,callback){
     db.getConnection(function(err,con){
         if(err){
             return callback(err);
         }
-        con.query(selectCardByIdSql,id,function(err,cards){
+        var tempSql = selectCardsByIds.replace('$ids$',ids);
+        con.query(tempSql,function(err,cards){
             return callback(err,cards);
         })
     });
@@ -69,3 +73,28 @@ Card.getFriendCards = function(friendId,userId,callback){
         });
     });
 };
+
+Card.useCard = function(id,userId,message,callback){
+    db.getConnection(function(err,con){
+        if(err){
+            return callback(err);
+        }
+        con.beginTransaction(function(err){
+            if(err){
+                return con.rollback(callback(err));
+            }
+            con.query(useCardSql,[id,userId],function(err){
+                if(err){
+                    return con.rollback(callback(err));
+                }
+                con.query(insertMessSql,[message],function(err){
+                    if(err){
+                        return con.rollback(callback(err));
+                    }
+                    con.commit(callback(err));
+                });
+            });
+        });
+
+    });
+}
